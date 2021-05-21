@@ -1,0 +1,22 @@
+name: Deployment
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Zip
+      uses: vimtor/action-zip@v1
+      with:
+        files: include/ cmake/ CMakeLists.txt vcpkg.json
+        dest: release.zip
+        recursive: false
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release.zip
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
