@@ -31,6 +31,12 @@ if(DEFINED rss_parser_sample)
 	add_subdirectory(sample)
 endif()
 
+if(DEFINED rss_parser_test)
+	enable_testing()
+	include(CTest)
+	add_subdirectory(test)
+endif()
+
 # locations are provided by GNUInstallDirs
 include(GNUInstallDirs)
 
