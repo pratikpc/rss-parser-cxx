@@ -17,9 +17,5 @@ ${LIBRARY_HXX_SOURCES}
 
 target_link_libraries(${PROJECT_NAME}
 PRIVATE
-	pc::rss-parser
+	pc::rss-parser	
 )
-
-target_include_directories(${PROJECT_NAME}
-	INTERFACE
-	$<BUILD_INTERFACE:${RAPIDXML_INCLUDE_DIRS}>)
