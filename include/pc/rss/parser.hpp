@@ -78,7 +78,7 @@ namespace pc::rss
       }
 #endif
 
-      pugi::xml_parse_result Load(std::string const& text)
+      pugi::xml_parse_result Load(std::string_view text)
       {
          return doc.load_string(std::data(text));
       }
@@ -86,7 +86,7 @@ namespace pc::rss
       {
          return doc.load_buffer(buffer, size);
       }
-      Channel Parse(std::string const& text)
+      Channel Parse(std::string_view text)
       {
          auto result = Load(text);
          if (!result)
