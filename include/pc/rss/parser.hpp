@@ -86,20 +86,20 @@ namespace pc::rss
       {
          return doc.load_buffer(buffer, size);
       }
-      Channel Parse(std::string_view text)
+      bool Parse(std::string_view text)
       {
          auto result = Load(text);
          if (!result)
-            throw std::runtime_error("Parsing failed");
+            return false;
          return Parse();
       }
 
-      Channel Parse()
+      bool Parse()
       {
 
          channelNode = ChannelNode(doc);
          if (!channelNode)
-            return channel;
+            return false;
 
          channel.title          = ExtractValue<Param>(channelNode, "title").value();
          channel.link           = ExtractValue<Param>(channelNode, "link").value();
@@ -115,7 +115,7 @@ namespace pc::rss
          channel.image          = ExtractValue<Image>(channelNode, "image");
          // channel.cloud     = ExtractItem<Param>("cloud");
 
-         return channel;
+         return true;
       }
 
     private:
