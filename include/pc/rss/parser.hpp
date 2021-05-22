@@ -210,12 +210,9 @@ namespace pc::rss
          item.source      = ExtractValue<Param>(node, "source");
          item.enclosure   = ExtractValue<Enclosure>(node, "enclosure");
 
-#ifdef PC_RSS_ENABLE_GENERATOR_FUNCTIONS
          if (extractCategory)
             for (auto const& categoryNode : node.children("category"))
                item.category.push_back(categoryNode.text().as_string());
-#endif
-
          return item;
       }
    };
