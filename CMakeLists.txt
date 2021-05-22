@@ -27,6 +27,10 @@ target_link_libraries(${PROJECT_NAME}
 	INTERFACE 
 	pugixml::pugixml)
 
+if(DEFINED rss_parser_sample)
+	add_subdirectory(sample)
+endif()
+
 # locations are provided by GNUInstallDirs
 include(GNUInstallDirs)
 
