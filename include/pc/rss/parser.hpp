@@ -52,6 +52,8 @@ namespace pc::rss
     public:
       Channel channel;
 
+      bool extractCategoryFromItems = true;
+
 #ifdef PC_RSS_ENABLE_GENERATOR_FUNCTIONS
       generator<std::string> category() const noexcept
       {
@@ -63,11 +65,11 @@ namespace pc::rss
          for (auto const& node : channelNode.child("skipDays").children("day"))
             co_yield node.text().as_string();
       }
-      generator<Item> items(bool extractCategory = true) const noexcept
+      generator<Item> items() const noexcept
       {
          for (auto const& node : channelNode.children("item"))
          {
-            auto item = ExtractItem(node, extractCategory);
+            auto const item = ExtractItem(node, extractCategoryFromItems);
             co_yield item;
          }
       }
