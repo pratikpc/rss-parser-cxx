@@ -1,0 +1,9 @@
+{
+  "name": "rss-parser",
+  "version": "1.0.0",
+  "dependencies": [
+    "pugixml"
+  ],
+  "license": "ISC",
+  "description": "A header only c++ RSS Parser library. Supports C++20 Generators"
+}
