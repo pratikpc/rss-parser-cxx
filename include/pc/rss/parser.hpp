@@ -189,11 +189,11 @@ namespace pc::rss
          if (!node)
             return std::nullopt;
          Image image;
-         image.link  = ExtractValue<Param>(node, "link").value();
-         image.url   = ExtractValue<Param>(node, "url").value();
-         image.title = ExtractValue<Param>(node, "title").value();
-         image.width = ExtractValue<Param>(node, "width");
-         image.height = ExtractValue<Param>(node, "height");
+         image.link        = ExtractValue<Param>(node, "link").value();
+         image.url         = ExtractValue<Param>(node, "url").value();
+         image.title       = ExtractValue<Param>(node, "title").value();
+         image.width       = ExtractValue<Param>(node, "width");
+         image.height      = ExtractValue<Param>(node, "height");
          image.description = ExtractValue<Param>(node, "description");
          return image;
       }
