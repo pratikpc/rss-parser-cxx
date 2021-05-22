@@ -176,20 +176,22 @@ int main()
       parse.Parse(str);
       for (rss::Item const& item : parse.items())
       {
-         if (item.title.has_value())
-            std::cout << "Title : " << item.title.value() << "\n";
-         else
-            std::cout << "Description : " << item.description.value() << "\n";
+         std::cout << "Title : " << *item.title << "\n";
+         std::cout << "Description : " << *item.description << "\n";
          for (std::string const& category : item.category)
             std::cout << "Category : " << category << "\n";
+         std::cout << "================================\n\n";
       }
-      //std::cout << "Image : " << parse.channel.image.value().link << "\n";
+      std::cout << "Image : " << parse.channel.image->link << "\n";
+      std::cout << "================================\n\n";
       std::cout << "Skip Hours\n";
       for (unsigned int const hour : parse.skipHours())
          std::cout << "Skip this hour : " << hour << "\n";
+      std::cout << "================================\n\n";
       std::cout << "Skip Days\n";
       for (std::string const& day : parse.skipDays())
          std::cout << "Skip this day : " << day << "\n";
+      std::cout << "================================\n\n";
    }
    catch (std::exception const& ex)
    {
