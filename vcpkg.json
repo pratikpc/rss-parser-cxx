@@ -6,5 +6,5 @@
     "pugixml"
   ],
   "license": "ISC",
-  "description": "A header only c++ RSS Parser library. Supports C++20 Generators"
+  "description": "A header only C++ RSS Parser library. Supports C++20 Generators"
 }
