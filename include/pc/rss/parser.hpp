@@ -39,6 +39,139 @@ namespace pc::rss
 #endif
    } // namespace
 
+   namespace
+   {
+      namespace detail
+      {
+         nodeT ChannelNode(docT const& doc)
+         {
+            auto const rssNode = doc.child("rss");
+            if (!rssNode)
+               return {};
+            auto const channelNode = rssNode.child("channel");
+            if (!channelNode)
+               return {};
+            return channelNode;
+         }
+
+         template <typename OutputT>
+         std::optional<OutputT> Extract(nodeT const&, std::string_view) requires(
+             !(std::is_same_v<OutputT, std::string> || std::is_integral_v<OutputT>))
+         {
+            static_assert(false);
+         }
+
+         std::string ToString(nodeT const& node)
+         {
+            std::ostringstream stream;
+            node.print(stream, "", pugi::format_raw);
+            return stream.str();
+         }
+
+         template <typename OutputT>
+         std::optional<OutputT>
+             Extract(nodeT const& parentNode, std::string_view type) requires(
+                 std::is_same_v<OutputT, std::string> || std::is_integral_v<OutputT>)
+         {
+            auto node = parentNode.child(std::data(type));
+            if (!node)
+               return std::nullopt;
+            node = node.first_child();
+            if (node.type() == pugi::xml_node_type::node_pcdata)
+            {
+               auto const text = node.text();
+               if constexpr (std::is_same_v<OutputT, std::string>)
+                  return text.as_string();
+               if constexpr (std::is_integral_v<OutputT>)
+                  return static_cast<OutputT>(text.as_ullong());
+            }
+            if constexpr (std::is_same_v<OutputT, std::string>)
+               return ToString(node);
+            else
+               return std::nullopt;
+         }
+
+         template <>
+         std::optional<Enclosure> Extract<Enclosure>(nodeT const&     parentNode,
+                                                     std::string_view type)
+         {
+            auto const node = parentNode.child(std::data(type));
+            if (!node)
+               return std::nullopt;
+            Enclosure enclosure;
+            enclosure.type = node.attribute("type").as_string();
+            enclosure.url  = node.attribute("url").as_string();
+            enclosure.length =
+                static_cast<IntParam>(node.attribute("length").as_ullong());
+            return enclosure;
+         }
+
+         template <>
+         std::optional<Image> Extract<Image>(nodeT const&     parentNode,
+                                             std::string_view type)
+         {
+            auto const node = parentNode.child(std::data(type));
+            if (!node)
+               return std::nullopt;
+            Image image;
+            image.link        = Extract<Param>(node, "link").value();
+            image.url         = Extract<Param>(node, "url").value();
+            image.title       = Extract<Param>(node, "title").value();
+            image.width       = Extract<Param>(node, "width");
+            image.height      = Extract<Param>(node, "height");
+            image.description = Extract<Param>(node, "description");
+            return image;
+         }
+
+         Item Extract(nodeT const& node, bool extractCategory = true)
+         {
+            Item item{};
+            item.title       = Extract<Param>(node, "title");
+            item.link        = Extract<Param>(node, "link");
+            item.description = Extract<Param>(node, "description");
+            item.comments    = Extract<Param>(node, "comments");
+            item.guid        = Extract<Param>(node, "guid");
+            item.pubDate     = Extract<Param>(node, "pubDate");
+            item.source      = Extract<Param>(node, "source");
+            item.enclosure   = Extract<Enclosure>(node, "enclosure");
+
+            if (extractCategory)
+               for (auto const& categoryNode : node.children("category"))
+                  item.category.push_back(categoryNode.text().as_string());
+            return item;
+         }
+
+         template <typename OutputT>
+         OutputT Extract(nodeT const&);
+         template <>
+         Item Extract<Item>(nodeT const& node)
+         {
+            return Extract(node, true);
+         }
+         template <>
+         Channel Extract<Channel>(nodeT const& node)
+         {
+            Channel channel;
+
+            channel.title          = Extract<Param>(node, "title").value();
+            channel.link           = Extract<Param>(node, "link").value();
+            channel.description    = Extract<Param>(node, "description").value();
+            channel.language       = Extract<Param>(node, "language");
+            channel.copyright      = Extract<Param>(node, "copyright");
+            channel.managingEditor = Extract<Param>(node, "managingEditor");
+            channel.webMaster      = Extract<Param>(node, "webMaster");
+            channel.pubDate        = Extract<Param>(node, "pubDate");
+            channel.generator      = Extract<Param>(node, "generator");
+            channel.docs           = Extract<Param>(node, "docs");
+            channel.ttl            = Extract<IntParam>(node, "ttl");
+            channel.image          = Extract<Image>(node, "image");
+            // channel.cloud     = ExtractItem<Param>(node, "cloud");
+
+            return channel;
+         }
+      } // namespace detail
+   }    // namespace
+
    struct Parser
    {
     private:
@@ -65,7 +198,7 @@ namespace pc::rss
       {
          for (auto const& node : channelNode.children("item"))
          {
-            auto const item = ExtractItem(node, extractCategoryFromItems);
+            auto const item = detail::Extract(node, extractCategoryFromItems);
             co_yield item;
          }
       }
@@ -94,125 +227,12 @@ namespace pc::rss
 
       bool Parse()
       {
-
-         channelNode = ChannelNode(doc);
+         channelNode = detail::ChannelNode(doc);
          if (!channelNode)
             return false;
 
-         channel.title          = ExtractValue<Param>(channelNode, "title").value();
-         channel.link           = ExtractValue<Param>(channelNode, "link").value();
-         channel.description    = ExtractValue<Param>(channelNode, "description").value();
-         channel.language       = ExtractValue<Param>(channelNode, "language");
-         channel.copyright      = ExtractValue<Param>(channelNode, "copyright");
-         channel.managingEditor = ExtractValue<Param>(channelNode, "managingEditor");
-         channel.webMaster      = ExtractValue<Param>(channelNode, "webMaster");
-         channel.pubDate        = ExtractValue<Param>(channelNode, "pubDate");
-         channel.generator      = ExtractValue<Param>(channelNode, "generator");
-         channel.docs           = ExtractValue<Param>(channelNode, "docs");
-         channel.ttl            = ExtractValue<IntParam>(channelNode, "ttl");
-         channel.image          = ExtractValue<Image>(channelNode, "image");
-         // channel.cloud     = ExtractItem<Param>("cloud");
-
+         channel = detail::Extract<Channel>(channelNode);
          return true;
-      }
-
-    private:
-      static nodeT ChannelNode(docT const& doc)
-      {
-         auto const rssNode = doc.child("rss");
-         if (!rssNode)
-            return {};
-         auto const channelNode = rssNode.child("channel");
-         if (!channelNode)
-            return {};
-         return channelNode;
-      }
-
-      template <typename OutputT>
-      static std::optional<OutputT> ExtractValue(nodeT const&, std::string_view) requires(
-          !std::is_same_v<OutputT, std::string> && !std::is_integral_v<OutputT>)
-      {
-         static_assert(false);
-      }
-
-      template <typename OutputT>
-      static std::optional<OutputT>
-          ExtractValue(nodeT const& parentNode, std::string_view type) requires(
-              std::is_same_v<OutputT, std::string> || std::is_integral_v<OutputT>)
-      {
-         auto node = parentNode.child(std::data(type));
-         if (!node)
-            return std::nullopt;
-         node = node.first_child();
-         if (node.type() == pugi::xml_node_type::node_pcdata)
-         {
-            auto const text = node.text();
-            if constexpr (std::is_same_v<OutputT, std::string>)
-               return text.as_string();
-            if constexpr (std::is_integral_v<OutputT>)
-               return static_cast<OutputT>(text.as_ullong());
-         }
-         if constexpr (std::is_same_v<OutputT, std::string>)
-            return ToString(node);
-         else
-            return std::nullopt;
-      }
-
-      static std::string ToString(nodeT const& node)
-      {
-
-         std::ostringstream stream;
-         node.print(stream, "", pugi::format_raw);
-         return stream.str();
-      }
-
-      template <>
-      static std::optional<Enclosure> ExtractValue<Enclosure>(nodeT const&     parentNode,
-                                                              std::string_view type)
-      {
-         auto const node = parentNode.child(std::data(type));
-         if (!node)
-            return std::nullopt;
-         Enclosure enclosure;
-         enclosure.type   = node.attribute("type").as_string();
-         enclosure.url    = node.attribute("url").as_string();
-         enclosure.length = static_cast<IntParam>(node.attribute("length").as_ullong());
-         return enclosure;
-      }
-
-      template <>
-      static std::optional<Image> ExtractValue<Image>(nodeT const&     parentNode,
-                                                      std::string_view type)
-      {
-         auto const node = parentNode.child(std::data(type));
-         if (!node)
-            return std::nullopt;
-         Image image;
-         image.link        = ExtractValue<Param>(node, "link").value();
-         image.url         = ExtractValue<Param>(node, "url").value();
-         image.title       = ExtractValue<Param>(node, "title").value();
-         image.width       = ExtractValue<Param>(node, "width");
-         image.height      = ExtractValue<Param>(node, "height");
-         image.description = ExtractValue<Param>(node, "description");
-         return image;
-      }
-
-      static Item ExtractItem(nodeT const& node, bool extractCategory = true)
-      {
-         Item item{};
-         item.title       = ExtractValue<Param>(node, "title");
-         item.link        = ExtractValue<Param>(node, "link");
-         item.description = ExtractValue<Param>(node, "description");
-         item.comments    = ExtractValue<Param>(node, "comments");
-         item.guid        = ExtractValue<Param>(node, "guid");
-         item.pubDate     = ExtractValue<Param>(node, "pubDate");
-         item.source      = ExtractValue<Param>(node, "source");
-         item.enclosure   = ExtractValue<Enclosure>(node, "enclosure");
-
-         if (extractCategory)
-            for (auto const& categoryNode : node.children("category"))
-               item.category.push_back(categoryNode.text().as_string());
-         return item;
       }
    };
 } // namespace pc::rss
