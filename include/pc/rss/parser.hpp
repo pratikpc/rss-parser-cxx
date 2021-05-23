@@ -31,9 +31,6 @@ namespace pc::rss
       using Param    = std::string;
       using IntParam = std::size_t;
 
-      using OptImage     = std::optional<Image>;
-      using OptEnclosure = std::optional<Enclosure>;
-
 #ifdef PC_RSS_PARSER_USE_STD_GENERATOR
       using std::generator;
 #endif
@@ -170,8 +167,8 @@ namespace pc::rss
       }
 
       template <>
-      static OptEnclosure ExtractValue<Enclosure>(nodeT const&     parentNode,
-                                                  std::string_view type)
+      static std::optional<Enclosure> ExtractValue<Enclosure>(nodeT const&     parentNode,
+                                                              std::string_view type)
       {
          auto const node = parentNode.child(std::data(type));
          if (!node)
@@ -184,7 +181,8 @@ namespace pc::rss
       }
 
       template <>
-      static OptImage ExtractValue<Image>(nodeT const& parentNode, std::string_view type)
+      static std::optional<Image> ExtractValue<Image>(nodeT const&     parentNode,
+                                                      std::string_view type)
       {
          auto const node = parentNode.child(std::data(type));
          if (!node)
