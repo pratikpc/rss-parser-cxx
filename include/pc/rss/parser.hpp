@@ -31,7 +31,6 @@ namespace pc::rss
       using Param    = std::string;
       using IntParam = std::size_t;
 
-      using MultiParam   = std::vector<Param>;
       using OptImage     = std::optional<Image>;
       using OptEnclosure = std::optional<Enclosure>;
 
