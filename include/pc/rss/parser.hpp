@@ -90,7 +90,7 @@ namespace pc::rss
       }
       bool Parse(std::string_view text)
       {
-         auto result = Load(text);
+         auto const result = Load(text);
          if (!result)
             return false;
          return Parse();
@@ -121,7 +121,7 @@ namespace pc::rss
       }
 
     private:
-      static nodeT ChannelNode(docT& doc)
+      static nodeT ChannelNode(docT const& doc)
       {
          auto const rssNode = doc.child("rss");
          if (!rssNode)
@@ -174,7 +174,7 @@ namespace pc::rss
       static OptEnclosure ExtractValue<Enclosure>(nodeT const&     parentNode,
                                                   std::string_view type)
       {
-         auto node = parentNode.child(std::data(type));
+         auto const node = parentNode.child(std::data(type));
          if (!node)
             return std::nullopt;
          Enclosure enclosure;
@@ -187,7 +187,7 @@ namespace pc::rss
       template <>
       static OptImage ExtractValue<Image>(nodeT const& parentNode, std::string_view type)
       {
-         auto node = parentNode.child(std::data(type));
+         auto const node = parentNode.child(std::data(type));
          if (!node)
             return std::nullopt;
          Image image;

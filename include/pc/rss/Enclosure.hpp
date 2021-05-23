@@ -7,12 +7,12 @@ namespace pc::rss
    namespace
    {
       using Param = std::string;
+      using Bytes = std::size_t;
    } // namespace
    struct Enclosure
    {
       Param type;
       Param url;
-      // In Bytes
-      std::size_t length;
+      Bytes length = 0;
    };
 } // namespace pc::rss
