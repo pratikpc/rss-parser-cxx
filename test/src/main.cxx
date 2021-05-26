@@ -181,6 +181,21 @@ TEST_CASE("Load Broken RSS fail")
    REQUIRE_FALSE(parser.Load("<rss></rses>"));
 }
 
+TEST_CASE("Load from stream")
+{
+   rss::Parser        parser;
+   std::istringstream stream{rss_working};
+   REQUIRE(parser.Load(stream));
+   REQUIRE(parser.Parse());
+}
+
+TEST_CASE("Load Broken RSS fail from stream")
+{
+   rss::Parser        parser;
+   std::istringstream stream{"<rss></rses>"};
+   REQUIRE_FALSE(parser.Load(stream));
+}
+
 TEST_CASE("Parse RSS")
 {
    rss::Parser parser;
