@@ -217,6 +217,13 @@ namespace pc::rss
       {
          return doc.load_buffer(buffer, size);
       }
+      template <typename CharT>
+      pugi::xml_parse_result
+          Load(std::basic_istream<CharT, std::char_traits<CharT>>& stream) requires(
+              std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t>)
+      {
+         return doc.load(stream);
+      }
       bool Parse(std::string_view text)
       {
          auto const result = Load(text);
