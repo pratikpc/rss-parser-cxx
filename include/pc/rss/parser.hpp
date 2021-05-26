@@ -212,21 +212,26 @@ namespace pc::rss
       }
 #endif
 
-      pugi::xml_parse_result Load(std::string_view text)
+      pugi::xml_parse_result Load(std::string_view   text,
+                                  unsigned int const options = pugi::parse_default)
       {
-         return doc.load_string(std::data(text));
+         return doc.load_string(std::data(text), options);
       }
-      pugi::xml_parse_result Load(void* const buffer, std::size_t const size)
+      pugi::xml_parse_result Load(void* const        buffer,
+                                  std::size_t const  size,
+                                  unsigned int const options = pugi::parse_default)
       {
-         return doc.load_buffer(buffer, size);
+         return doc.load_buffer(buffer, size, options);
       }
 #ifndef PUGIXML_NO_STL
       template <typename CharT>
       pugi::xml_parse_result
-          Load(std::basic_istream<CharT, std::char_traits<CharT>>& stream) requires(
-              std::is_same_v<CharT, char> || std::is_same_v<CharT, wchar_t>)
+          Load(std::basic_istream<CharT, std::char_traits<CharT>>& stream,
+               unsigned int const                                  options =
+                   pugi::parse_default) requires(std::is_same_v<CharT, char> ||
+                                                 std::is_same_v<CharT, wchar_t>)
       {
-         return doc.load(stream);
+         return doc.load(stream, options);
       }
 #endif
       bool Parse(std::string_view text)
