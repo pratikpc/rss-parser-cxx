@@ -175,7 +175,7 @@ TEST_CASE("Load RSS")
    REQUIRE(parser.Load(rss_working));
 }
 
-TEST_CASE("Load Broken XML Fail")
+TEST_CASE("Load Broken RSS fail")
 {
    rss::Parser parser;
    REQUIRE_FALSE(parser.Load("<rss></rses>"));
