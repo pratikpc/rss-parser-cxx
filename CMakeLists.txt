@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(rss-parser
-	VERSION 1.2.1
+	VERSION 1.3.0
 	DESCRIPTION
 	"A header only C++ RSS Parser library. Supports C++20 Generators"
 	HOMEPAGE_URL  "https://github.com/pratikpc/rss-parser-cxx")
