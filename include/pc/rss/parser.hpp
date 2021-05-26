@@ -61,12 +61,14 @@ namespace pc::rss
             static_assert(false);
          }
 
+#ifndef PUGIXML_NO_STL
          std::string ToString(nodeT const& node)
          {
             std::ostringstream stream;
             node.print(stream, "", pugi::format_raw);
             return stream.str();
          }
+#endif
 
          template <typename OutputT>
          std::optional<OutputT>
@@ -85,10 +87,11 @@ namespace pc::rss
                if constexpr (std::is_integral_v<OutputT>)
                   return static_cast<OutputT>(text.as_ullong());
             }
+#ifndef PUGIXML_NO_STL
             if constexpr (std::is_same_v<OutputT, std::string>)
                return ToString(node);
-            else
-               return std::nullopt;
+#endif
+            return std::nullopt;
          }
 
          template <>
@@ -217,6 +220,7 @@ namespace pc::rss
       {
          return doc.load_buffer(buffer, size);
       }
+#ifndef PUGIXML_NO_STL
       template <typename CharT>
       pugi::xml_parse_result
           Load(std::basic_istream<CharT, std::char_traits<CharT>>& stream) requires(
@@ -224,6 +228,7 @@ namespace pc::rss
       {
          return doc.load(stream);
       }
+#endif
       bool Parse(std::string_view text)
       {
          auto const result = Load(text);
