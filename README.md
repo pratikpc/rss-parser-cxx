@@ -55,3 +55,7 @@ int main()
    return EXIT_SUCCESS;
 }
 ```
+
+## Depends on
+- [pugixml](https://github.com/zeux/pugixml)  
+It helps us parse RSS documents
