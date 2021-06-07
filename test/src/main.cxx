@@ -186,7 +186,7 @@ TEST_CASE("Load from stream")
    rss::Parser        parser;
    std::istringstream stream{rss_working};
    REQUIRE(parser.Load(stream));
-   REQUIRE(parser.Parse());
+   REQUIRE(parser.Channel());
 }
 
 TEST_CASE("Load Broken RSS fail from stream")
@@ -195,73 +195,90 @@ TEST_CASE("Load Broken RSS fail from stream")
    std::istringstream stream{"<rss></rses>"};
    REQUIRE_FALSE(parser.Load(stream));
 }
+TEST_CASE("Load Broken RSS fail with mising channel")
+{
+   rss::Parser parser{"<rss></rss>"};
+   REQUIRE_FALSE(parser.Channel());
+}
 
 TEST_CASE("Parse RSS")
 {
    rss::Parser parser;
    REQUIRE(parser.Load(rss_working));
-   REQUIRE(parser.Parse());
+   REQUIRE(parser.Channel());
+}
+TEST_CASE("Parse RSS using constructor")
+{
+   rss::Parser parser(rss_working);
+   REQUIRE(parser);
+   REQUIRE(parser.Channel());
 }
 
 TEST_CASE("Parse RSS using Combined functions")
 {
    rss::Parser parser;
-   REQUIRE(parser.Parse(rss_working));
+   REQUIRE(parser.Channel(rss_working));
 }
 
 TEST_CASE("Parse Broken RSS Fail")
 {
    rss::Parser parser;
-   REQUIRE_FALSE(parser.Parse("<rss></rses>"));
+   REQUIRE_FALSE(parser.Channel("<rss></rses>"));
 }
 
 TEST_CASE("Check channel")
 {
-   rss::Parser parser;
-   parser.Parse(rss_working);
-   rss::Channel const channel = parser.channel;
-   REQUIRE(channel.title == "FeedForAll Sample Feed");
-   REQUIRE(channel.description ==
+   rss::Parser        parser;
+   rss::Channel const channel = parser.Channel(rss_working);
+
+   REQUIRE(channel.title() == "FeedForAll Sample Feed");
+   REQUIRE(channel.description() ==
            "RSS is a fascinating technology. The uses for RSS are expanding daily. "
            "Take a closer look at how various industries are using the benefits of "
            "RSS in their businesses.");
-   REQUIRE(channel.link == "http://www.feedforall.com/industry-solutions.htm");
-   REQUIRE(channel.docs.value() == "http://blogs.law.harvard.edu/tech/rss");
-   REQUIRE(channel.language.value() == "en-us");
-   REQUIRE(channel.copyright.value() == "Copyright 2004 NotePage, Inc.");
-   REQUIRE(channel.managingEditor.value() == "marketing@feedforall.com");
-   REQUIRE(channel.webMaster.value() == "webmaster@feedforall.com");
-   REQUIRE(channel.generator.value() == "FeedForAll Beta1 (0.0.1.8)");
+   REQUIRE(channel.link() == "http://www.feedforall.com/industry-solutions.htm");
+   REQUIRE(channel.docs().value() == "http://blogs.law.harvard.edu/tech/rss");
+   REQUIRE(channel.language().value() == "en-us");
+   REQUIRE(channel.copyright().value() == "Copyright 2004 NotePage, Inc.");
+   REQUIRE(channel.managingEditor().value() == "marketing@feedforall.com");
+   REQUIRE(channel.webMaster().value() == "webmaster@feedforall.com");
+   REQUIRE(channel.generator().value() == "FeedForAll Beta1 (0.0.1.8)");
 }
 
 TEST_CASE("Check image")
 {
-   rss::Parser parser;
-   parser.Parse(rss_working);
-   rss::Image const image = parser.channel.image.value();
-   REQUIRE(image.url == "http://www.feedforall.com/ffalogo48x48.gif");
-   REQUIRE(image.width);
-   REQUIRE(image.width.value() == "48");
-   REQUIRE(image.height);
-   REQUIRE(image.height.value() == "48");
+   rss::Parser parser{};
+   REQUIRE(parser);
+
+   REQUIRE(parser.Channel(rss_working));
+   REQUIRE(parser.Channel());
+   rss::Image const image = parser.Channel().image();
+   REQUIRE(image);
+   REQUIRE(image.url() == "http://www.feedforall.com/ffalogo48x48.gif");
+   REQUIRE(image.width());
+   REQUIRE(image.width().value() == "48");
+   REQUIRE(image.height());
+   REQUIRE(image.height().value() == "48");
 }
 
 TEST_CASE("Empty title should cause parsing failure")
 {
    rss::Parser parser;
-   REQUIRE_THROWS(parser.Parse(R"(<rss version="2.0">
+   REQUIRE(parser.Load(R"(<rss version="2.0">
                    <channel>
                      <description>RSS is a fascinating technology. The uses for RSS are expanding daily. Take a closer look at how various industries are using the benefits of RSS in their businesses.</description>
                      <link>http://www.feedforall.com/industry-solutions.htm</link>
                    </channel>
                    </rss>
 )"));
+   REQUIRE(parser.Channel());
+   REQUIRE_THROWS(parser.Channel().title());
 }
 
 TEST_CASE("Check if docs tag is empty")
 {
    rss::Parser parser;
-   REQUIRE(parser.Parse(R"(<rss version="2.0">
+   REQUIRE(parser.Load(R"(<rss version="2.0">
                    <channel>
                      <title>Sample Testing</title>
                      <description>RSS is a fascinating technology. The uses for RSS are expanding daily. Take a closer look at how various industries are using the benefits of RSS in their businesses.</description>
@@ -269,21 +286,23 @@ TEST_CASE("Check if docs tag is empty")
                    </channel>
                    </rss>
 )"));
-   rss::Channel const channel = parser.channel;
-   REQUIRE(channel.title == "Sample Testing");
-   REQUIRE_FALSE(channel.docs);
-   REQUIRE_THROWS(channel.docs.value());
+   rss::Channel const channel = parser.Channel();
+   REQUIRE(channel.title() == "Sample Testing");
+   REQUIRE_FALSE(channel.docs());
+   REQUIRE_THROWS(channel.docs().value());
 }
+
+#ifdef PC_RSS_ENABLE_GENERATOR_FUNCTIONS
 
 TEST_CASE("Check skip days")
 {
    rss::Parser parser;
-   REQUIRE(parser.Parse(rss_working));
+   REQUIRE(parser.Channel(rss_working));
 
    std::array skipDaysCorrectAnswers{"Saturday", "Sunday"};
 
    auto it = std::cbegin(skipDaysCorrectAnswers);
-   for (auto const& skipDay : parser.skipDays())
+   for (auto const& skipDay : parser.Channel().skipDays())
    {
       REQUIRE(skipDay == *it);
       ++it;
@@ -293,12 +312,12 @@ TEST_CASE("Check skip days")
 TEST_CASE("Check skip hours")
 {
    rss::Parser parser;
-   REQUIRE(parser.Parse(rss_working));
+   REQUIRE(parser.Channel(rss_working));
 
    std::array skipHourCorrectAnswers{0, 7, 23};
 
    auto it = std::cbegin(skipHourCorrectAnswers);
-   for (auto const& skipHour : parser.skipHours())
+   for (auto const& skipHour : parser.Channel().skipHours())
    {
       REQUIRE(skipHour == *it);
       ++it;
@@ -308,7 +327,7 @@ TEST_CASE("Check skip hours")
 TEST_CASE("Check item parsing")
 {
    rss::Parser parser;
-   REQUIRE(parser.Parse(rss_working));
+   REQUIRE(parser.Channel(rss_working));
 
    std::array itemTitleCorrectAnswers{"RSS Solutions for Restaurants",
                                       "RSS Solutions for Schools and Colleges",
@@ -321,9 +340,11 @@ TEST_CASE("Check item parsing")
                                       "RSS Solutions for Law Enforcement"};
 
    auto it = std::cbegin(itemTitleCorrectAnswers);
-   for (auto const& item : parser.items())
+   for (auto const& item : parser.Channel().items())
    {
-      REQUIRE(*item.title == *it);
+      REQUIRE(*item.title() == *it);
       ++it;
    }
 }
+
+#endif

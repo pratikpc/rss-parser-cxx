@@ -1,18 +1,26 @@
 #pragma once
 
-#include <string>
+#include <pc/rss/detail/RSSNode.hpp>
 
 namespace pc::rss
 {
    namespace
    {
-      using Param = std::string;
       using Bytes = std::size_t;
    } // namespace
-   struct Enclosure
+   struct Enclosure : public RssNode
    {
-      Param type;
-      Param url;
-      Bytes length = 0;
+      Param type() const 
+      {
+         return attribute<Param>("type").value();
+      }
+      Param url() const 
+      {
+         return attribute<Param>("url").value();
+      }
+      Bytes length() const 
+      {
+         return attribute<Bytes>("url").value();
+      }
    };
 } // namespace pc::rss

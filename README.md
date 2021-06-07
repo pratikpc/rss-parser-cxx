@@ -9,46 +9,46 @@ int main()
 {
    namespace rss = pc::rss;
 
-   // Add valid RSS
-   std::string const str{R"()"};
-
-   rss::Parser parse;
-   if (!parse.Load(str))
+   rss::Parser parse{str};
+   if (!parse)
    {
       std::cout << "Load failed";
       return EXIT_FAILURE;
    }
-   if (!parse.Parse())
+   auto const channel = parse.Channel();
+   if (!channel)
    {
       std::cout << "Parsing failed";
       return EXIT_FAILURE;
    }
 
-   for (rss::Item const& item : parse.items())
+   for (rss::Item const& item : channel.items())
    {
-      if (item.title)
-         std::cout << "Title : " << *item.title << "\n";
+      auto const title = item.title();
+      if (title)
+         std::cout << "Title : " << *title << "\n";
+      auto const description = item.description();
+      if (description)
+         std::cout << "Description : " << *description << "\n";
 
-      if (item.description)
-         std::cout << "Description : " << *item.description << "\n";
-
-      for (std::string const& category : item.category)
+      for (std::string const& category : item.category())
          std::cout << "Category : " << category << "\n";
       std::cout << "================================\n\n";
    }
-   if (parse.channel.image)
+   auto const image = channel.image();
+   if (image)
    {
-      std::cout << "Image : " << parse.channel.image->link << "\n";
+      std::cout << "Image : " << image.link() << "\n";
       std::cout << "================================\n\n";
    }
 
    std::cout << "Skip Hours\n";
-   for (unsigned int const hour : parse.skipHours())
+   for (unsigned int const hour : channel.skipHours())
       std::cout << "Skip this hour : " << hour << "\n";
    std::cout << "================================\n\n";
 
    std::cout << "Skip Days\n";
-   for (std::string const& day : parse.skipDays())
+   for (std::string const& day : channel.skipDays())
       std::cout << "Skip this day : " << day << "\n";
    std::cout << "================================\n\n";
 
